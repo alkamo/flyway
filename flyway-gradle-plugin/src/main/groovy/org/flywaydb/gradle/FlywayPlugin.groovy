@@ -42,32 +42,6 @@ public class FlywayPlugin implements Plugin<Project> {
         project.getTasks().create("flywayValidate", FlywayValidateTask.class);
         project.getTasks().create("flywayInfo", FlywayInfoTask.class);
         project.getTasks().create("flywayRepair", FlywayRepairTask.class);
-        configureMigrateRules(project)
-    }
-
-    private void configureMigrateRules(final Project project) {
-        String prefix = 'flywayMigrate'
-        String description = "Pattern: flywayMigrate<DatabaseName>: Migrates the schema to the latest version."
-        Rule rule = [
-                getDescription: { description },
-                apply         : { String taskName ->
-                    if (!taskName.startsWith(prefix)) {
-                        return
-                    }
-                    String targetTaskName = taskName.substring(prefix.length())
-                    Task task = project.tasks.findByName(StringUtils.uncapitalize(targetTaskName))
-                    if (task == null) {
-                        return
-                    }
-                    if (!(targetTaskName in project.flyway.extensions.databases.keySet())){
-                        return
-                    }
-                    FlywayMigrateTask migrate = project.tasks.add(taskName, FlywayMigrateTask)
-                    migrate.run(project.flyway.extensions.databases[targetTaskName])
-                },
-                toString      : { "Rule: " + description }
-        ] as Rule
-        project.getTasks().addRule(rule)
     }
 
 }
