@@ -27,6 +27,10 @@ class FlywayMigrateTask extends AbstractFlywayTask {
   }
 
   def run(Flyway flyway) {
-      didWork = flyway.migrate() > 0
+    didWork = flyway.migrate() > 0
+  }
+
+  def run(String name, Flyway flyway) {
+    didWork = flyway.migrate() > 0
   }
 }

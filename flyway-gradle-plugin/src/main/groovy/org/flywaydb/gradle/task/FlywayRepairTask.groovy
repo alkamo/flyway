@@ -33,4 +33,8 @@ class FlywayRepairTask extends AbstractFlywayTask {
   def run(Flyway flyway) {
     flyway.repair()
   }
+
+  def run(String name, Flyway flyway) {
+    flyway.repair()
+  }
 }

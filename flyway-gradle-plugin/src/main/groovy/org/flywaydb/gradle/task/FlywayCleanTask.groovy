@@ -29,4 +29,8 @@ class FlywayCleanTask extends AbstractFlywayTask {
   def run(Flyway flyway) {
     flyway.clean()
   }
+
+  def run(String name, Flyway flyway) {
+    flyway.clean()
+  }
 }

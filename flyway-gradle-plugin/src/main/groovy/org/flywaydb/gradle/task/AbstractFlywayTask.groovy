@@ -16,12 +16,13 @@
 package org.flywaydb.gradle.task
 
 import org.flywaydb.core.Flyway
-import org.flywaydb.core.api.callback.FlywayCallback
 import org.flywaydb.core.api.FlywayException
 import org.flywaydb.core.internal.util.Location
 import org.flywaydb.core.internal.util.StringUtils
 import org.flywaydb.core.internal.util.jdbc.DriverDataSource
+import org.flywaydb.gradle.FlywayExtensionBase
 import org.flywaydb.gradle.FlywayExtension
+import org.flywaydb.gradle.ListPropertyInstruction
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
 
@@ -37,11 +38,11 @@ abstract class AbstractFlywayTask extends DefaultTask {
     /**
      * The flyway {} block in the build script.
      */
-    protected FlywayExtension extension
+    protected FlywayExtension masterExtension
 
     AbstractFlywayTask() {
         group = 'Flyway'
-        extension = project.flyway
+        masterExtension = project.flyway
     }
 
     @TaskAction
@@ -64,10 +65,22 @@ abstract class AbstractFlywayTask extends DefaultTask {
             }
         }
 
-        try {
-            run(createFlyway())
-        } catch (Exception e) {
-            handleException(e)
+        if (project.flyway.databases.size() == 0) {
+            try {
+                run(createFlyway())
+            } catch (Exception e) {
+                handleException(e)
+            }
+        } else {
+            project.flyway.databases.each { flywayLocal ->
+                logger.info "Executing ${this.getName()} for ${flywayLocal.name}"
+                try {
+                    run(flywayLocal.name, createFlyway(flywayLocal))
+                } catch (Exception e) {
+                    throw new FlywayException(
+                            "Error occurred while executing ${this.getName()} for ${flywayLocal.name}", e);
+                }
+            }
         }
     }
 
@@ -76,96 +89,63 @@ abstract class AbstractFlywayTask extends DefaultTask {
 
     /** Creates a new, configured flyway instance */
     protected def createFlyway() {
+        createFlyway(project.flyway)
+    }
+
+    /** Creates a new, configured flyway instance for a specific extension
+     * @param localExtension The extension that is currently being processed.
+     */
+    protected def createFlyway(FlywayExtensionBase localExtension) {
         def flyway = new Flyway()
-        flyway.setDataSource(new DriverDataSource(Thread.currentThread().getContextClassLoader(), prop("driver"), prop("url"), prop("user"), prop("password")))
+        flyway.setDataSource(new DriverDataSource(
+                Thread.currentThread().getContextClassLoader(),
+                prop("driver", localExtension),
+                prop("url", localExtension),
+                prop("user", localExtension),
+                prop("password", localExtension)))
 
-        propSet(flyway, 'table')
+        propSet(flyway, 'table', localExtension)
 
-        String baselineVersion = prop('baselineVersion')
+        String baselineVersion = prop('baselineVersion', localExtension)
         if (baselineVersion != null) {
             flyway.setBaselineVersionAsString(baselineVersion)
         }
 
-        propSet(flyway, 'baselineDescription')
-        propSet(flyway, 'sqlMigrationPrefix')
-        propSet(flyway, 'repeatableSqlMigrationPrefix')
-        propSet(flyway, 'sqlMigrationSeparator')
-        propSet(flyway, 'sqlMigrationSuffix')
-        propSet(flyway, 'encoding')
-        propSetAsBoolean(flyway, 'placeholderReplacement')
-        propSet(flyway, 'placeholderPrefix')
-        propSet(flyway, 'placeholderSuffix')
+        propSet(flyway, 'baselineDescription', localExtension)
+        propSet(flyway, 'sqlMigrationPrefix', localExtension)
+        propSet(flyway, 'repeatableSqlMigrationPrefix', localExtension)
+        propSet(flyway, 'sqlMigrationSeparator', localExtension)
+        propSet(flyway, 'sqlMigrationSuffix', localExtension)
+        propSet(flyway, 'encoding', localExtension)
+        propSetAsBoolean(flyway, 'placeholderReplacement', localExtension)
+        propSet(flyway, 'placeholderPrefix', localExtension)
+        propSet(flyway, 'placeholderSuffix', localExtension)
 
-        String target = prop('target')
+        String target = prop('target', localExtension)
         if (target != null) {
             flyway.setTargetAsString(target)
         }
 
-        propSetAsBoolean(flyway, 'outOfOrder')
-        propSetAsBoolean(flyway, 'validateOnMigrate')
-        propSetAsBoolean(flyway, 'cleanOnValidationError')
-        propSetAsBoolean(flyway, 'ignoreFutureMigrations')
-        propSetAsBoolean(flyway, 'cleanDisabled')
-        propSetAsBoolean(flyway, 'baselineOnMigrate')
-        propSetAsBoolean(flyway, 'skipDefaultResolvers')
-        propSetAsBoolean(flyway, 'skipDefaultCallbacks')
+        propSetAsBoolean(flyway, 'outOfOrder', localExtension)
+        propSetAsBoolean(flyway, 'validateOnMigrate', localExtension)
+        propSetAsBoolean(flyway, 'cleanOnValidationError', localExtension)
+        propSetAsBoolean(flyway, 'ignoreFutureMigrations', localExtension)
+        propSetAsBoolean(flyway, 'cleanDisabled', localExtension)
+        propSetAsBoolean(flyway, 'baselineOnMigrate', localExtension)
+        propSetAsBoolean(flyway, 'skipDefaultResolvers', localExtension)
+        propSetAsBoolean(flyway, 'skipDefaultCallbacks', localExtension)
 
-        def sysSchemas = System.getProperty("flyway.schemas")
-        if (sysSchemas != null) {
-            flyway.schemas = StringUtils.tokenizeToStringArray(sysSchemas, ",")
-        } else if (project.hasProperty("flyway.schemas")) {
-            flyway.schemas = StringUtils.tokenizeToStringArray(project["flyway.schemas"].toString(), ",")
-        } else if (extension.schemas != null) {
-            flyway.schemas = extension.schemas
-        }
+        propSetAsList(flyway, 'schemas', masterExtension.schemasInstruction, localExtension)
 
         flyway.setLocations(Location.FILESYSTEM_PREFIX + project.projectDir + '/src/main/resources/db/migration')
-        def sysLocations = System.getProperty("flyway.locations")
-        if (sysLocations != null) {
-            flyway.locations = StringUtils.tokenizeToStringArray(sysLocations, ",")
-        } else if (project.hasProperty("flyway.locations")) {
-            flyway.locations = StringUtils.tokenizeToStringArray(project["flyway.locations"].toString(), ",")
-        } else if (extension.locations != null) {
-            flyway.locations = extension.locations
-        }
+        propSetAsList(flyway, 'locations', masterExtension.locationsInstruction, localExtension)
 
-        def sysResolvers = System.getProperty("flyway.resolvers")
-        if (sysResolvers != null) {
-            flyway.setResolversAsClassNames(StringUtils.tokenizeToStringArray(sysResolvers, ","))
-        } else if (project.hasProperty("flyway.resolvers")) {
-            flyway.setResolversAsClassNames(StringUtils.tokenizeToStringArray(project["flyway.resolvers"].toString(), ","))
-        } else if (extension.resolvers != null) {
-            flyway.setResolversAsClassNames(extension.resolvers)
-        }
+        propSetAsList(flyway, 'resolvers', masterExtension.resolversInstruction, localExtension, true)
+        propSetAsList(flyway, 'callbacks', masterExtension.callbacksInstruction, localExtension, true)
 
-        Map<String, String> placeholders = [:]
-        System.getProperties().each { String key, String value ->
-            if (key.startsWith(PLACEHOLDERS_PROPERTY_PREFIX)) {
-                placeholders.put(key.substring(PLACEHOLDERS_PROPERTY_PREFIX.length()), value)
-            }
-        }
-        if (placeholders.isEmpty()) {
-            project.properties.keySet().each { String key ->
-                if (key.startsWith(PLACEHOLDERS_PROPERTY_PREFIX)) {
-                    placeholders.put(key.substring(PLACEHOLDERS_PROPERTY_PREFIX.length()), project.properties[key])
-                }
-            }
-        }
-        if (placeholders.isEmpty() && (extension.placeholders != null)) {
-            placeholders.putAll(extension.placeholders)
-        }
-        flyway.placeholders = placeholders
+        propSetAsMap(flyway, 'placeholders', masterExtension.placeholdersInstruction, localExtension)
 
-        def sysCallbacks = System.getProperty("flyway.callbacks")
-        if (sysCallbacks != null) {
-            flyway.setCallbacksAsClassNames(StringUtils.tokenizeToStringArray(sysCallbacks, ","))
-        } else if (project.hasProperty("flyway.callbacks")) {
-            flyway.setCallbacksAsClassNames(StringUtils.tokenizeToStringArray(project["flyway.callbacks"].toString(), ","))
-        } else if (extension.callbacks != null) {
-            flyway.setCallbacksAsClassNames(extension.callbacks)
-        }
-
-		flyway
+        flyway
     }
 
     /**
@@ -196,9 +176,10 @@ abstract class AbstractFlywayTask extends DefaultTask {
      * Sets this property on this Flyway instance if a value has been defined.
      * @param flyway The Flyway instance.
      * @param property The property to set.
+     * @param localExtension The extension that is currently being processed.
      */
-    private void propSet(Flyway flyway, String property) {
-        String value = prop(property);
+    private void propSet(Flyway flyway, String property, FlywayExtensionBase localExtension) {
+        String value = prop(property, localExtension);
         if (value != null) {
             // use method call instead of property as it does not work nice with overload GROOVY-6084
             flyway."set${property.capitalize()}"(value)
@@ -208,22 +189,137 @@ abstract class AbstractFlywayTask extends DefaultTask {
      * Sets this property on this Flyway instance if a value has been defined.
      * @param flyway The Flyway instance.
      * @param property The property to set.
+     * @param localExtension The extension that is currently being processed.
      */
-    private void propSetAsBoolean(Flyway flyway, String property) {
-        String value = prop(property);
+    private void propSetAsBoolean(Flyway flyway, String property, FlywayExtensionBase localExtension) {
+        String value = prop(property, localExtension);
         if (value != null) {
             flyway."set${property.capitalize()}"(value.toBoolean())
         }
     }
+    /**
+     * Sets this property on this Flyway instance if a value has been defined.
+     * @param flyway The Flyway instance.
+     * @param property The property to set.
+     * @param instruction The instruction on whether to prioritize or merge conflicting lists.
+     * @param localExtension The extension that is currently being processed.
+     * @param asClassNames Indicator of whether the call to Flyway uses set<property>AsClassName.
+     */
+    private void propSetAsList(
+            Flyway flyway,
+            String property,
+            ListPropertyInstruction instruction,
+            FlywayExtensionBase localExtension,
+            Boolean asClassNames = false) {
+        String propertyName = "flyway.${property}"
+        def sysProperty = System.getProperty(propertyName)
+        List<String> propertyValues = []
+        String methodName = "set${property.capitalize()}"
+        if (asClassNames) {
+            methodName += "AsClassNames"
+        }
+        if (sysProperty != null) {
+            mergeList(propertyValues, StringUtils.tokenizeToStringArray(sysProperty, ","))
+        }
+        if ((propertyValues.size() == 0
+                ||  instruction == ListPropertyInstruction.MERGE)
+                && project.hasProperty(propertyName)) {
+            mergeList(propertyValues, StringUtils.tokenizeToStringArray(project[propertyName].toString(), ","))
+        }
+        if ((propertyValues.size() == 0
+                || instruction == ListPropertyInstruction.MERGE)
+                && (localExtension."${property}" != null)) {
+            mergeList(propertyValues, localExtension."${property}")
+        }
+        if ((propertyValues.size() == 0
+                ||  instruction == ListPropertyInstruction.MERGE)
+                && (masterExtension."${property}" != null)) {
+            mergeList(propertyValues, masterExtension."${property}")
+        }
+        if (propertyValues.size() > 0) {
+            flyway."${methodName}"(propertyValues.toArray(new String[0]))
+        }
+    }
 
     /**
-     * Retrieves the value of this property, first trying System Properties, then Gradle properties and finally the Flyway extension.
+     * Sets this property on this Flyway instance if a value has been defined.
+     * @param flyway The Flyway instance.
+     * @param property The property to set.
+     * @param instruction The instruction on whether to prioritize or merge conflicting lists.
+     * @param localExtension The extension that is currently being processed.
+     */
+    private void propSetAsMap(
+            Flyway flyway,
+            String property,
+            ListPropertyInstruction instruction,
+            FlywayExtensionBase localExtension) {
+        Map<String, String> propertyValues = [:]
+        System.getProperties().each { String key, String value ->
+            if (key.startsWith(PLACEHOLDERS_PROPERTY_PREFIX)) {
+                propertyValues.put(key.substring(PLACEHOLDERS_PROPERTY_PREFIX.length()), value)
+            }
+        }
+        if (propertyValues.isEmpty() ||  instruction == ListPropertyInstruction.MERGE) {
+            Map<String, String> projectValues = [:]
+            project.properties.keySet().each { String key ->
+                if (key.startsWith(PLACEHOLDERS_PROPERTY_PREFIX)) {
+                    projectValues.put(key.substring(PLACEHOLDERS_PROPERTY_PREFIX.length()), project.properties[key])
+                }
+            }
+            mergeMap(propertyValues, projectValues)
+        }
+        if ((propertyValues.isEmpty() ||  instruction == ListPropertyInstruction.MERGE)
+                && localExtension."${property}" != null) {
+            mergeMap(propertyValues, localExtension."${property}")
+        }
+        if ((propertyValues.isEmpty() ||  instruction == ListPropertyInstruction.MERGE)
+                && masterExtension."${property}" != null) {
+            mergeMap(propertyValues, masterExtension."${property}")
+        }
+        if (propertyValues.size() > 0) {
+            flyway."set${property.capitalize()}"(propertyValues)
+        }
+    }
+
+    private void mergeList(
+            List<?> masterList,
+            String[] arrayToMerge) {
+
+        arrayToMerge.each { listValue ->
+            if (!(listValue in masterList)) {
+                masterList.add(listValue)
+            }
+        }
+    }
+
+    private void mergeMap(
+            Map<String, String> masterMap,
+            Map<String, String> mapToMerge) {
+
+        mapToMerge.each { key, value ->
+            if (!(key in masterMap.keySet())) {
+                masterMap[key] = value
+            }
+        }
+    }
+
+
+
+    /**
+     * Retrieves the value of this property, first trying System Properties, then Gradle properties,
+     * then the passed Flyway extension and finally the main Flyway properties.
      * @param property The property whose value to get.
+     * @param localExtension The extension that is currently being processed.
      * @return The value. {@code null} if not found.
      */
-    private String prop(String property) {
+    private String prop(String property, FlywayExtensionBase localExtension) {
         String propertyName = "flyway.${property}"
-        System.getProperty(propertyName) ?: project.hasProperty(propertyName) ? project[propertyName] : extension[property]
+        System.getProperty(propertyName) ?:
+                project.hasProperty(propertyName) ?
+                        project[propertyName] :
+                        localExtension[property] != null ?
+                                localExtension[property] :
+                                masterExtension[property]
     }
 
     protected boolean isJavaProject() {

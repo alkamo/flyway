@@ -29,4 +29,8 @@ class FlywayValidateTask extends AbstractFlywayTask {
   def run(Flyway flyway) {
     flyway.validate()
   }
+
+  def run(String name, Flyway flyway) {
+    flyway.validate()
+  }
 }

@@ -23,11 +23,16 @@ import org.flywaydb.core.internal.info.MigrationInfoDumper
  */
 class FlywayInfoTask extends AbstractFlywayTask {
 
-  FlywayInfoTask() {
-    description = 'Prints the details and status information about all the migrations.'
-  }
+    FlywayInfoTask() {
+        description = 'Prints the details and status information about all the migrations.'
+    }
 
-  def run(Flyway flyway) {
-      println MigrationInfoDumper.dumpToAsciiTable(flyway.info().all())
-  }
+    def run(Flyway flyway) {
+        println MigrationInfoDumper.dumpToAsciiTable(flyway.info().all())
+    }
+
+    def run(String name, Flyway flyway) {
+        println "FlywayInfo for ${name}"
+        println MigrationInfoDumper.dumpToAsciiTable(flyway.info().all())
+    }
 }

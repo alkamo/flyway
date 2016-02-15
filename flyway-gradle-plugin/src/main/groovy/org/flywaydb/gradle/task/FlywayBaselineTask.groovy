@@ -24,6 +24,10 @@ class FlywayBaselineTask extends AbstractFlywayTask {
   }
 
   def run(Flyway flyway) {
-    flyway.init()
+    flyway.baseline()
+  }
+
+  def run(String name, Flyway flyway) {
+    flyway.baseline()
   }
 }
