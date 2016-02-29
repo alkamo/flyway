@@ -143,7 +143,12 @@ abstract class AbstractFlywayTask extends DefaultTask {
         propSetAsList(flyway, 'resolvers', masterExtension.resolversInstruction, localExtension, true)
         propSetAsList(flyway, 'callbacks', masterExtension.callbacksInstruction, localExtension, true)
 
-        propSetAsMap(flyway, 'placeholders', masterExtension.placeholdersInstruction, localExtension)
+        propSetAsMap(
+                flyway,
+                'placeholders',
+                masterExtension.placeholdersInstruction,
+                PLACEHOLDERS_PROPERTY_PREFIX,
+                localExtension)
 
         flyway
     }
@@ -252,18 +257,19 @@ abstract class AbstractFlywayTask extends DefaultTask {
             Flyway flyway,
             String property,
             ListPropertyInstruction instruction,
+            String prefix,
             FlywayExtensionBase localExtension) {
         Map<String, String> propertyValues = [:]
         System.getProperties().each { String key, String value ->
-            if (key.startsWith(PLACEHOLDERS_PROPERTY_PREFIX)) {
-                propertyValues.put(key.substring(PLACEHOLDERS_PROPERTY_PREFIX.length()), value)
+            if (key.startsWith(prefix)) {
+                propertyValues.put(key.substring(prefix.length()), value)
             }
         }
         if (propertyValues.isEmpty() ||  instruction == ListPropertyInstruction.MERGE) {
             Map<String, String> projectValues = [:]
             project.properties.keySet().each { String key ->
-                if (key.startsWith(PLACEHOLDERS_PROPERTY_PREFIX)) {
-                    projectValues.put(key.substring(PLACEHOLDERS_PROPERTY_PREFIX.length()), project.properties[key])
+                if (key.startsWith(prefix)) {
+                    projectValues.put(key.substring(prefix.length()), project.properties[key])
                 }
             }
             mergeMap(propertyValues, projectValues)
