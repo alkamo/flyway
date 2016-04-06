@@ -18,6 +18,8 @@ package org.flywaydb.gradle
 /**
  * The flyway's configuration properties plus configurations used to determine how to
  * apply extension containers (if they exist).
+ *
+ * <p>More info: <a href="https://flywaydb.org/documentation/gradle">https://flywaydb.org/documentation/gradle</a></p>
  */
 public class FlywayExtension extends FlywayExtensionBase {
     ListPropertyInstruction schemasInstruction = ListPropertyInstruction.PRIORITIZE
