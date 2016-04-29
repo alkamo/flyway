@@ -16,14 +16,18 @@
 package org.flywaydb.gradle.task
 
 import org.flywaydb.core.Flyway
+import org.flywaydb.gradle.FlywayExtension
 
 /**
  * @author Ben Manes (ben.manes@gmail.com)
  */
 class FlywayValidateTask extends AbstractFlywayTask {
+  public final static String baseName = 'flywayValidate'
+  public final static String baseDescription ='Validates the applied migrations against the ones available on the classpath'
 
   FlywayValidateTask() {
-    description = 'Validates the applied migrations against the ones available on the classpath.'
+    super()
+    description = baseDescription
   }
 
   def run(Flyway flyway) {

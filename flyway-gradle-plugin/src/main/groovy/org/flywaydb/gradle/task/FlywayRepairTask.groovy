@@ -16,6 +16,7 @@
 package org.flywaydb.gradle.task
 
 import org.flywaydb.core.Flyway
+import org.flywaydb.gradle.FlywayExtension
 
 /**
  * Repairs the Flyway metadata table. This will perform the following actions:
@@ -25,9 +26,12 @@ import org.flywaydb.core.Flyway
  * </ul>
  */
 class FlywayRepairTask extends AbstractFlywayTask {
+  public final static String baseName = 'flywayRepair'
+  public final static String baseDescription ='Repairs the Flyway metadata table'
 
   FlywayRepairTask() {
-    description = 'Repairs the Flyway metadata table.'
+    super()
+    description = baseDescription
   }
 
   def run(Flyway flyway) {

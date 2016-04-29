@@ -16,18 +16,23 @@
 package org.flywaydb.gradle.task
 
 import org.flywaydb.core.Flyway
+import org.flywaydb.gradle.FlywayExtension
 
 class FlywayBaselineTask extends AbstractFlywayTask {
+    public final static String baseName = 'flywayBaseline'
+    public final
+    static String baseDescription = 'Baselines an existing database, excluding all migrations up to and including baselineVersion'
 
-  FlywayBaselineTask() {
-    description = 'Baselines an existing database, excluding all migrations up to and including baselineVersion.'
-  }
+    FlywayBaselineTask() {
+        super()
+        description = baseDescription
+    }
 
-  def run(Flyway flyway) {
-    flyway.baseline()
-  }
+    def run(Flyway flyway) {
+        flyway.baseline()
+    }
 
-  def run(String name, Flyway flyway) {
-    flyway.baseline()
-  }
+    def run(String name, Flyway flyway) {
+        flyway.baseline()
+    }
 }

@@ -16,14 +16,18 @@
 package org.flywaydb.gradle.task
 
 import org.flywaydb.core.Flyway
+import org.flywaydb.gradle.FlywayExtension
 
 /**
  * @author Ben Manes (ben.manes@gmail.com)
  */
 class FlywayCleanTask extends AbstractFlywayTask {
+  public final static String baseName = 'flywayClean'
+  public final static String baseDescription ='Drops all objects in the configured schemas'
 
   FlywayCleanTask() {
-    description = 'Drops all objects in the configured schemas.'
+    super()
+    description = baseDescription
   }
 
   def run(Flyway flyway) {

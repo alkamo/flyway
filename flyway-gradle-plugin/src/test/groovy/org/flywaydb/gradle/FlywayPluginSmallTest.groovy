@@ -62,6 +62,33 @@ class FlywayPluginSmallTest {
     }
 
     @Test
+    public void checkIfRulesArePresent() {
+        project.flyway {
+            url = defaultUrl
+            databases {
+                testA {
+                }
+                testB {
+                }
+            }
+        }
+
+        assert project.tasks.findByName('flywayCleantestA')
+        assert project.tasks.findByName('flywayInfotestA')
+        assert project.tasks.findByName('flywayBaselinetestA')
+        assert project.tasks.findByName('flywayMigratetestA')
+        assert project.tasks.findByName('flywayRepairtestA')
+        assert project.tasks.findByName('flywayValidatetestA')
+
+        assert project.tasks.findByName('flywayCleantestB')
+        assert project.tasks.findByName('flywayInfotestB')
+        assert project.tasks.findByName('flywayBaselinetestB')
+        assert project.tasks.findByName('flywayMigratetestB')
+        assert project.tasks.findByName('flywayRepairtestB')
+        assert project.tasks.findByName('flywayValidatetestB')
+    }
+
+    @Test
     public void validateBasicExtensionProperties() {
         project.flyway {
             url = defaultUrl

@@ -17,14 +17,18 @@ package org.flywaydb.gradle.task
 
 import org.flywaydb.core.Flyway
 import org.flywaydb.core.internal.info.MigrationInfoDumper
+import org.flywaydb.gradle.FlywayExtension
 
 /**
  * @author Ben Manes (ben.manes@gmail.com)
  */
 class FlywayInfoTask extends AbstractFlywayTask {
+    public final static String baseName = 'flywayInfo'
+    public final static String baseDescription ='Prints the details and status information about all the migrations'
 
     FlywayInfoTask() {
-        description = 'Prints the details and status information about all the migrations.'
+        super()
+        description = baseDescription
     }
 
     def run(Flyway flyway) {

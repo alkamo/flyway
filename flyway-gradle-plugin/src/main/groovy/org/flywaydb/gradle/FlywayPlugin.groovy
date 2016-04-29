@@ -15,6 +15,12 @@
  */
 package org.flywaydb.gradle
 
+import org.flywaydb.gradle.rule.FlywayBaselineRule
+import org.flywaydb.gradle.rule.FlywayCleanRule
+import org.flywaydb.gradle.rule.FlywayInfoRule
+import org.flywaydb.gradle.rule.FlywayMigrateRule
+import org.flywaydb.gradle.rule.FlywayRepairRule
+import org.flywaydb.gradle.rule.FlywayValidateRule;
 import org.flywaydb.gradle.task.FlywayCleanTask;
 import org.flywaydb.gradle.task.FlywayInfoTask;
 import org.flywaydb.gradle.task.FlywayBaselineTask;
@@ -23,8 +29,6 @@ import org.flywaydb.gradle.task.FlywayRepairTask;
 import org.flywaydb.gradle.task.FlywayValidateTask;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
-import org.gradle.api.Rule;
-import org.gradle.api.Task;
 
 /**
  * Registers the plugin's tasks.
@@ -33,16 +37,26 @@ import org.gradle.api.Task;
  */
 
 public class FlywayPlugin implements Plugin<Project> {
-    public void apply(Project project) {
-        project.extensions.create("flyway", FlywayExtension.class);
-        project.flyway.extensions.databases = project.container(FlywayContainer);
-        project.getTasks().create("flywayClean", FlywayCleanTask.class);
-        project.getTasks().create("flywayBaseline", FlywayBaselineTask.class);
-        project.getTasks().create("flywayMigrate", FlywayMigrateTask.class);
-        project.getTasks().create("flywayValidate", FlywayValidateTask.class);
-        project.getTasks().create("flywayInfo", FlywayInfoTask.class);
-        project.getTasks().create("flywayRepair", FlywayRepairTask.class);
-    }
 
+    @Override
+    public void apply(Project project) {
+        project.getExtensions().create("flyway", FlywayExtension.class);
+        project.flyway.extensions.databases = project.container(FlywayContainer.class);
+        project.getTasks().create(FlywayCleanTask.baseName, FlywayCleanTask.class);
+        project.getTasks().create(FlywayBaselineTask.baseName, FlywayBaselineTask.class);
+        project.getTasks().create(FlywayMigrateTask.baseName, FlywayMigrateTask.class);
+        project.getTasks().create(FlywayValidateTask.baseName, FlywayValidateTask.class);
+        project.getTasks().create(FlywayInfoTask.baseName, FlywayInfoTask.class);
+        project.getTasks().create(FlywayRepairTask.baseName, FlywayRepairTask.class);
+
+        project.tasks.addRule(new FlywayCleanRule(project, project.extensions));
+        project.tasks.addRule(new FlywayBaselineRule(project, project.extensions));
+        project.tasks.addRule(new FlywayMigrateRule(project, project.extensions));
+        project.tasks.addRule(new FlywayValidateRule(project, project.extensions));
+        project.tasks.addRule(new FlywayInfoRule(project, project.extensions));
+        project.tasks.addRule(new FlywayRepairRule(project, project.extensions));
+    }
 }
+
+
 

@@ -22,6 +22,7 @@ import org.flywaydb.core.internal.util.StringUtils
 import org.flywaydb.core.internal.util.jdbc.DriverDataSource
 import org.flywaydb.gradle.FlywayExtensionBase
 import org.flywaydb.gradle.FlywayExtension
+import org.flywaydb.gradle.FlywayContainer
 import org.flywaydb.gradle.ListPropertyInstruction
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
@@ -40,9 +41,15 @@ abstract class AbstractFlywayTask extends DefaultTask {
      */
     protected FlywayExtension masterExtension
 
+    private FlywayContainer currentExtension
+
     AbstractFlywayTask() {
         group = 'Flyway'
         masterExtension = project.flyway
+    }
+
+    void setCurrentExtension (FlywayContainer extension){
+        this.currentExtension = extension
     }
 
     @TaskAction
@@ -71,7 +78,13 @@ abstract class AbstractFlywayTask extends DefaultTask {
             } catch (Exception e) {
                 handleException(e)
             }
-        } else {
+        } else if (null != currentExtension) {
+            try {
+                run(currentExtension.getName(), createFlyway(currentExtension))
+            } catch (Exception e) {
+                handleException(e)
+            }
+        } else{
             project.flyway.databases.each { flywayLocal ->
                 logger.info "Executing ${this.getName()} for ${flywayLocal.name}"
                 try {

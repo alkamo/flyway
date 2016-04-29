@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.flywaydb.gradle
+package org.flywaydb.gradle;
 
 /**
  * The flyway's configuration properties plus configurations used to determine how to
@@ -22,9 +22,9 @@ package org.flywaydb.gradle
  * <p>More info: <a href="https://flywaydb.org/documentation/gradle">https://flywaydb.org/documentation/gradle</a></p>
  */
 public class FlywayExtension extends FlywayExtensionBase {
-    ListPropertyInstruction schemasInstruction = ListPropertyInstruction.PRIORITIZE
-    ListPropertyInstruction locationsInstruction = ListPropertyInstruction.PRIORITIZE
-    ListPropertyInstruction resolversInstruction = ListPropertyInstruction.PRIORITIZE
-    ListPropertyInstruction placeholdersInstruction = ListPropertyInstruction.PRIORITIZE
-    ListPropertyInstruction callbacksInstruction = ListPropertyInstruction.PRIORITIZE
+    ListPropertyInstruction schemasInstruction = ListPropertyInstruction.PRIORITIZE;
+    ListPropertyInstruction locationsInstruction = ListPropertyInstruction.PRIORITIZE;
+    ListPropertyInstruction resolversInstruction = ListPropertyInstruction.PRIORITIZE;
+    ListPropertyInstruction placeholdersInstruction = ListPropertyInstruction.PRIORITIZE;
+    ListPropertyInstruction callbacksInstruction = ListPropertyInstruction.PRIORITIZE;
 }

@@ -16,14 +16,18 @@
 package org.flywaydb.gradle.task
 
 import org.flywaydb.core.Flyway
+import org.flywaydb.gradle.FlywayExtension
 
 /**
  * @author Ben Manes (ben.manes@gmail.com)
  */
 class FlywayMigrateTask extends AbstractFlywayTask {
+  public final static String baseName = 'flywayMigrate'
+  public final static String baseDescription ='Migrates the schema to the latest version'
 
   FlywayMigrateTask() {
-    description = 'Migrates the schema to the latest version.'
+    super()
+    description = baseDescription
   }
 
   def run(Flyway flyway) {
